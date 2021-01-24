@@ -5,6 +5,7 @@ import memstore.data.DataLoader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -67,8 +68,11 @@ public class RowTable implements Table {
      */
     @Override
     public long columnSum() {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for(int i = 0; i < this.numRows; i++){
+            sum += this.getIntField(i, 0);
+        }
+        return sum;
     }
 
     /**
@@ -80,8 +84,15 @@ public class RowTable implements Table {
      */
     @Override
     public long predicatedColumnSum(int threshold1, int threshold2) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for(int i = 0; i < this.numRows; i++){
+            int col0 = this.getIntField(i, 0);
+            if (this.getIntField(i, 1) <= threshold1 || this.getIntField(i, 2) >= threshold2){
+                continue;
+            }
+            sum += col0;
+        }
+        return sum;
     }
 
     /**
@@ -92,8 +103,16 @@ public class RowTable implements Table {
      */
     @Override
     public long predicatedAllColumnsSum(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for(int i = 0; i < this.numRows; i++){
+            if (this.getIntField(i, 0) <= threshold){
+                continue;
+            }
+            for(int j = 0; j < this.numCols; j++){
+                sum += this.getIntField(i, j);
+            }
+        }
+        return sum;
     }
 
     /**
@@ -104,7 +123,14 @@ public class RowTable implements Table {
      */
     @Override
     public int predicatedUpdate(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int rows = 0;
+        for(int i = 0; i < this.numRows; i++){
+            if (this.getIntField(i, 0) >= threshold){
+                continue;
+            }
+            this.putIntField(i, 3, this.getIntField(i, 2) + this.getIntField(i, 3));
+            rows++;
+        }
+        return rows;
     }
 }
