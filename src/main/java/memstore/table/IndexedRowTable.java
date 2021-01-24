@@ -60,7 +60,7 @@ public class IndexedRowTable implements Table {
      */
     @Override
     public int getIntField(int rowId, int colId) {
-        int offset = ByteFormat.FIELD_LEN * (rowId * numCols) + colId;
+        int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
         return this.rows.getInt(offset);
     }
 
@@ -69,7 +69,7 @@ public class IndexedRowTable implements Table {
      */
     @Override
     public void putIntField(int rowId, int colId, int field) {
-        int offset = ByteFormat.FIELD_LEN * (rowId * numCols) + colId;
+        int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
         this.rows.putInt(offset, field);
     }
 

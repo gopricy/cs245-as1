@@ -47,7 +47,7 @@ public class RowTable implements Table {
      */
     @Override
     public int getIntField(int rowId, int colId) {
-        int offset = ByteFormat.FIELD_LEN * (rowId * numCols) + colId;
+        int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
         return this.rows.getInt(offset);
     }
 
@@ -56,7 +56,7 @@ public class RowTable implements Table {
      */
     @Override
     public void putIntField(int rowId, int colId, int field) {
-        int offset = ByteFormat.FIELD_LEN * (rowId * numCols) + colId;
+        int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
         this.rows.putInt(offset, field);
     }
 
@@ -86,11 +86,11 @@ public class RowTable implements Table {
     public long predicatedColumnSum(int threshold1, int threshold2) {
         int sum = 0;
         for(int i = 0; i < this.numRows; i++){
-            int col0 = this.getIntField(i, 0);
+//            int col0 = this.getIntField(i, 0);
             if (this.getIntField(i, 1) <= threshold1 || this.getIntField(i, 2) >= threshold2){
                 continue;
             }
-            sum += col0;
+            sum += this.getIntField(i, 0);
         }
         return sum;
     }
