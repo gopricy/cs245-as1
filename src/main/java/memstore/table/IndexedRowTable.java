@@ -6,8 +6,7 @@ import memstore.data.DataLoader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * IndexedRowTable, which stores data in row-major format.
@@ -41,6 +40,7 @@ public class IndexedRowTable implements Table {
         List<ByteBuffer> rows = loader.getRows();
         numRows = rows.size();
         this.rows = ByteBuffer.allocate(ByteFormat.FIELD_LEN * numRows * numCols);
+        this.index = new TreeMap<>();
 
         for (int rowId = 0; rowId < numRows; rowId++) {
             ByteBuffer curRow = rows.get(rowId);
@@ -49,7 +49,10 @@ public class IndexedRowTable implements Table {
                 int value = curRow.getInt(ByteFormat.FIELD_LEN * colId);
                 this.rows.putInt(offset, value);
                 if(colId == this.indexColumn){
-                    this.rows.putInt(rowId, value);
+                    if (this.index.get(value) == null){
+                        this.index.put(value, new IntArrayList());
+                    }
+                    this.index.get(value).add(rowId);
                 }
             }
         }
@@ -97,8 +100,17 @@ public class IndexedRowTable implements Table {
      */
     @Override
     public long predicatedColumnSum(int threshold1, int threshold2) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        if (this.indexColumn != 1 && this.indexColumn != 2){
+            for(int i = 0; i < this.numRows; i++){
+                if (this.getIntField(i, 1) <= threshold1 || this.getIntField(i, 2) >= threshold2){
+                    continue;
+                }
+                sum += this.getIntField(i, 0);
+            }
+        }
+        //TODO: Boning needs this to be fixed
+        return sum;
     }
 
     /**
@@ -109,8 +121,31 @@ public class IndexedRowTable implements Table {
      */
     @Override
     public long predicatedAllColumnsSum(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        if(this.indexColumn == 0){
+            TreeSet<Integer> selectedKeys = new TreeSet<>();
+            NavigableMap<Integer, IntArrayList> tail = this.index.tailMap(threshold, false);
+            Collection<IntArrayList> arrays = tail.values();
+            for (IntArrayList i: arrays){
+                selectedKeys.addAll(i);
+            }
+
+            for (int i : selectedKeys) {
+                for (int j = 0; j < this.numCols; j++) {
+                    sum += this.getIntField(i, j);
+                }
+            }
+        } else{
+            for(int i = 0; i < this.numRows; i++){
+                if (this.getIntField(i, 0) <= threshold){
+                    continue;
+                }
+                for(int j = 0; j < this.numCols; j++){
+                    sum += this.getIntField(i, j);
+                }
+            }
+        }
+        return sum;
     }
 
     /**
@@ -121,7 +156,19 @@ public class IndexedRowTable implements Table {
      */
     @Override
     public int predicatedUpdate(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int updateNum = 0;
+        TreeSet<Integer> selectedKeys = new TreeSet<>();
+        NavigableMap<Integer, IntArrayList> tail = this.index.headMap(threshold, false);
+        Collection<IntArrayList> arrays = tail.values();
+        for (IntArrayList i: arrays){
+            selectedKeys.addAll(i);
+        }
+        for (int i : selectedKeys) {
+                int col2 = this.getIntField(i, 2);
+                int col3 = this.getIntField(i, 3);
+                this.putIntField(i, 3, col2 + col3);
+                updateNum += 1;
+        }
+        return updateNum;
     }
 }

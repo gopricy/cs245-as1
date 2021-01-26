@@ -86,7 +86,6 @@ public class RowTable implements Table {
     public long predicatedColumnSum(int threshold1, int threshold2) {
         int sum = 0;
         for(int i = 0; i < this.numRows; i++){
-//            int col0 = this.getIntField(i, 0);
             if (this.getIntField(i, 1) <= threshold1 || this.getIntField(i, 2) >= threshold2){
                 continue;
             }
